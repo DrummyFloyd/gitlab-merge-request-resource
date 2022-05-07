@@ -2,10 +2,10 @@ package out_test
 
 import (
 	"encoding/json"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg/out"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg"
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg/out"
 	"github.com/xanzy/go-gitlab"
 	"io/ioutil"
 	"net/http"

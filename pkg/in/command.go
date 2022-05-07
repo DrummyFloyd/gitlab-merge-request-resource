@@ -2,7 +2,7 @@ package in
 
 import (
 	"encoding/json"
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
 	"github.com/xanzy/go-gitlab"
 	"io/ioutil"
 	"net/url"

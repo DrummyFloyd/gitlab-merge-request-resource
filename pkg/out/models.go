@@ -1,7 +1,7 @@
 package out
 
 import (
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
 	"io/ioutil"
 	"path"
 	"strings"

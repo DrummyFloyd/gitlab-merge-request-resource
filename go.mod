@@ -1,4 +1,4 @@
-module github.com/samcontesse/gitlab-merge-request-resource
+module github.com/DrummyFloyd/gitlab-merge-request-resource
 
 go 1.17
 

@@ -3,10 +3,10 @@ package in_test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg/in"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg"
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg/in"
 	"github.com/xanzy/go-gitlab"
 	"io/ioutil"
 	"net/http"

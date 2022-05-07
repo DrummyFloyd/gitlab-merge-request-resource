@@ -9,7 +9,7 @@ resource_types:
 - name: merge-request
   type: docker-image
   source:
-    repository: samcontesse/gitlab-merge-request-resource
+    repository: DrummyFloyd/gitlab-merge-request-resource
 
 resources:
 - name: merge-request

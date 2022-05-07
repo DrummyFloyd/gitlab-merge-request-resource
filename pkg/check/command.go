@@ -1,7 +1,7 @@
 package check
 
 import (
-	"github.com/samcontesse/gitlab-merge-request-resource/pkg"
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
 	"github.com/xanzy/go-gitlab"
 	"strings"
 	"time"
