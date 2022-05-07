@@ -15,6 +15,7 @@ type Source struct {
 	PrivateToken       string   `json:"private_token"`
 	Insecure           bool     `json:"insecure"`
 	SkipWorkInProgress bool     `json:"skip_work_in_progress,omitempty"`
+	SkipDrafts         bool     `json:"skip_drafts,omitempty"`
 	SkipNotMergeable   bool     `json:"skip_not_mergeable,omitempty"`
 	SkipTriggerComment bool     `json:"skip_trigger_comment,omitempty"`
 	ConcourseUrl       string   `json:"concourse_url,omitempty"`

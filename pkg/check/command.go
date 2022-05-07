@@ -1,10 +1,11 @@
 package check
 
 import (
-	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
-	"github.com/xanzy/go-gitlab"
 	"strings"
 	"time"
+
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
+	"github.com/xanzy/go-gitlab"
 )
 
 type Command struct {
@@ -61,6 +62,10 @@ func (command *Command) Run(request Request) (Response, error) {
 		if !request.Source.SkipTriggerComment {
 			notes, _, _ := command.client.Notes.ListMergeRequestNotes(mr.ProjectID, mr.IID, &gitlab.ListMergeRequestNotesOptions{})
 			updatedAt = getMostRecentUpdateTime(notes, updatedAt)
+		}
+
+		if request.Source.SkipDrafts && mr.Draft {
+			continue
 		}
 
 		if request.Source.SkipNotMergeable && mr.MergeStatus != "can_be_merged" {
