@@ -3,31 +3,31 @@ project_name: gitlab-merge-request-resource
 
 before:
   hooks:
-  - go mod tidy
+    - go mod tidy
 
 builds:
   - &build
     id: check
     main: ./cli/check/cmd/main.go
-    binary: 'assets_{{ .Os }}_{{ .Arch }}/check'
+    binary: "assets_{{ .Os }}_{{ .Arch }}/check"
     no_unique_dist_dir: true
-    env: [ 'CGO_ENABLED=0' ]
+    env: ["CGO_ENABLED=0"]
     goos: [linux]
     goarch: [amd64]
   - <<: *build
     id: in
     main: ./cli/in/cmd/main.go
-    binary: 'assets_{{ .Os }}_{{ .Arch }}/in'
+    binary: "assets_{{ .Os }}_{{ .Arch }}/in"
   - <<: *build
     id: out
     main: ./cli/out/cmd/main.go
-    binary: 'assets_{{ .Os }}_{{ .Arch }}/out'
+    binary: "assets_{{ .Os }}_{{ .Arch }}/out"
 
 archives:
   - id: archives
     builds: [check, in, out]
     format: "tar.gz"
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: true
     files:
       - README*
@@ -38,8 +38,8 @@ changelog:
   use: github
   filters:
     exclude:
-    - 'docs'
-    - '\.md'
+      - "docs"
+      - '\.md'
 
 checksum:
   name_template: checksums.txt
@@ -64,6 +64,6 @@ dockers:
 
 release:
   prerelease: auto
-  name_template: '{{.Tag}}'
-
-...
+  name_template: "{{.Tag}}"
+env_files:
+  github_token: ~/.goreleaser/gh_token
