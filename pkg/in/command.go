@@ -2,12 +2,15 @@ package in
 
 import (
 	"encoding/json"
-	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
-	"github.com/xanzy/go-gitlab"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"strconv"
+
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
+	"github.com/xanzy/go-gitlab"
 )
 
 type Command struct {
@@ -64,7 +67,11 @@ func (command *Command) Run(destination string, request Request) (Response, erro
 	command.runner.Run("remote", "update")
 	command.runner.Run("merge", "--no-ff", "--no-commit", mr.SHA)
 	if err != nil {
-		return Response{}, err
+		createDiffPatchFromApi(mr)
+		command.runner.Run("am", ".git/mr-id_"+strconv.Itoa(mr.ID)+".patch")
+		if err != nil {
+			return Response{}, err
+		}
 	}
 
 	notes, _ := json.Marshal(mr)
@@ -98,7 +105,31 @@ func (command *Command) createRepositoryUrl(pid int, token string) (*url.URL, er
 
 	return u, nil
 }
+func createDiffPatchFromApi(mr *gitlab.MergeRequest) error {
+	fileName := fmt.Sprintf(".git/mr-id_%d.patch", mr.ID)
+	var data string
+	_, err := os.Create(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, change := range mr.Changes {
+		if change.NewFile {
+			data = fmt.Sprintf("new file mode %s\n--- /dev/null\n+++ %s\n%s", change.AMode, change.NewPath, change.Diff)
 
+		} else if change.DeletedFile {
+			data = fmt.Sprintf("deleted file mode %s\n--- %s\n+++ /dev/null\n%s", change.AMode, change.OldPath, change.Diff)
+
+		} else if change.RenamedFile {
+			data = fmt.Sprintf("--- %s\n+++ %s\n%s", change.OldPath, change.NewPath, change.Diff)
+
+		} else {
+			data = fmt.Sprintf("--- %s\n+++ %s\n%s\n", change.OldPath, change.NewPath, change.Diff)
+
+		}
+		ioutil.WriteFile(fileName, []byte(data), 0644)
+	}
+	return nil
+}
 func buildMetadata(mr *gitlab.MergeRequest, commit *gitlab.Commit) pkg.Metadata {
 	return []pkg.MetadataField{
 		{
