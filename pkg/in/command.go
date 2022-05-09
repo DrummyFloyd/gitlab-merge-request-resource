@@ -41,18 +41,18 @@ func (command *Command) Run(destination string, request Request) (Response, erro
 		return Response{}, err
 	}
 
+	change, _, err := command.client.MergeRequests.GetMergeRequestChanges(request.Source.GetProjectPath(), request.Version.ID, &gitlab.GetMergeRequestChangesOptions{})
+	if err != nil {
+		return Response{}, err
+	}
 	mr.UpdatedAt = request.Version.UpdatedAt
 
 	target, err := command.createRepositoryUrl(mr.TargetProjectID, request.Source.PrivateToken)
 	if err != nil {
 		return Response{}, err
 	}
-	source, err := command.createRepositoryUrl(mr.SourceProjectID, request.Source.PrivateToken)
-	if err != nil {
-		return Response{}, err
-	}
 
-	commit, _, err := command.client.Commits.GetCommit(mr.SourceProjectID, mr.SHA)
+	commit, _, err := command.client.MergeRequests.GetMergeRequestCommits(mr.ProjectID, mr.IID, &gitlab.GetMergeRequestCommitsOptions{})
 	if err != nil {
 		return Response{}, err
 	}
@@ -63,15 +63,15 @@ func (command *Command) Run(destination string, request Request) (Response, erro
 	}
 
 	os.Chdir(destination)
-	command.runner.Run("remote", "add", "source", source.String())
-	command.runner.Run("remote", "update")
-	command.runner.Run("merge", "--no-ff", "--no-commit", mr.SHA)
+
+	err = createDiffPatchFromApi(change)
 	if err != nil {
-		createDiffPatchFromApi(mr)
-		command.runner.Run("am", ".git/mr-id_"+strconv.Itoa(mr.ID)+".patch")
-		if err != nil {
-			return Response{}, err
-		}
+		return Response{}, err
+	}
+
+	command.runner.Run("apply", ".git/mr-id_"+strconv.Itoa(mr.ID)+".patch", "--whitespace=nowarn")
+	if err != nil {
+		return Response{}, err
 	}
 
 	notes, _ := json.Marshal(mr)
@@ -85,7 +85,13 @@ func (command *Command) Run(destination string, request Request) (Response, erro
 		return Response{}, err
 	}
 
-	response := Response{Version: request.Version, Metadata: buildMetadata(mr, commit)}
+	jsonChanges, _ := json.Marshal(change)
+	err = ioutil.WriteFile(".git/merge-request-changes", jsonChanges, 0644)
+	if err != nil {
+		return Response{}, err
+	}
+
+	response := Response{Version: request.Version, Metadata: buildMetadata(mr, commit[0])}
 
 	return response, nil
 }
@@ -105,30 +111,31 @@ func (command *Command) createRepositoryUrl(pid int, token string) (*url.URL, er
 
 	return u, nil
 }
-func createDiffPatchFromApi(mr *gitlab.MergeRequest) error {
-	fileName := fmt.Sprintf(".git/mr-id_%d.patch", mr.ID)
+func createDiffPatchFromApi(mrChange *gitlab.MergeRequest) error {
+	fileName := fmt.Sprintf(".git/mr-id_" + strconv.Itoa(mrChange.ID) + ".patch")
 	var data string
 	_, err := os.Create(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, change := range mr.Changes {
+	for _, change := range mrChange.Changes {
 		if change.NewFile {
-			data = fmt.Sprintf("new file mode %s\n--- /dev/null\n+++ %s\n%s", change.AMode, change.NewPath, change.Diff)
+			data = fmt.Sprintf(data+"new file mode %s\n--- /dev/null\n+++ b/%s\n%s", change.AMode, change.NewPath, change.Diff)
 
 		} else if change.DeletedFile {
-			data = fmt.Sprintf("deleted file mode %s\n--- %s\n+++ /dev/null\n%s", change.AMode, change.OldPath, change.Diff)
+			data = fmt.Sprintf(data+"deleted file mode %s\n--- a/%s\n+++ /dev/null\n%s", change.AMode, change.OldPath, change.Diff)
 
 		} else if change.RenamedFile {
-			data = fmt.Sprintf("--- %s\n+++ %s\n%s", change.OldPath, change.NewPath, change.Diff)
+			data = fmt.Sprintf(data+"--- a/%s\n+++ b/%s\n%s", change.OldPath, change.NewPath, change.Diff)
 
 		} else {
-			data = fmt.Sprintf("--- %s\n+++ %s\n%s\n", change.OldPath, change.NewPath, change.Diff)
+			data = fmt.Sprintf(data+"--- a/%s\n+++ b/%s\n%s\n", change.OldPath, change.NewPath, change.Diff)
 
 		}
-		ioutil.WriteFile(fileName, []byte(data), 0644)
+
 	}
-	return nil
+	ioutil.WriteFile(fileName, []byte(data), 0644)
+	return err
 }
 func buildMetadata(mr *gitlab.MergeRequest, commit *gitlab.Commit) pkg.Metadata {
 	return []pkg.MetadataField{
@@ -145,8 +152,12 @@ func buildMetadata(mr *gitlab.MergeRequest, commit *gitlab.Commit) pkg.Metadata 
 			Value: mr.SHA,
 		},
 		{
-			Name:  "message",
+			Name:  "commit title",
 			Value: commit.Title,
+		},
+		{
+			Name:  "commit message",
+			Value: commit.Message,
 		},
 		{
 			Name:  "title",
