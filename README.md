@@ -56,6 +56,14 @@ Updates the merge request's `merge_status` which displays nicely in the GitLab U
 #### Parameters
 
 * `repository`: The path of the repository of the merge request's source branch (required)
+* `name_builder`: Useful in the case where the ressource can't access to private fork and update pipeline status, in this case the ressource will write a notes on MR like this:
+
+
+Hi, i'm <name_builder> builder due to this [limitations](https://gitlab.com/gitlab-org/gitlab/-/issues/23648), i can't update pipeline status.<br>
+			*Build State*: **<status>**<br>
+			*Build URL*: [here](%s)`
+Default: "Concourse"
+
 * `status`: The new status of the merge request (required, can be either `pending`, `running`, `success`, `failed`, or `canceled`)
 * `labels`(string[]): The labels you want add to your merge request
 * `comment`: Add a comment for MR. Could be an object with `text`/`file` fields. If just the `file` or `text` is specified it is used to populate the field, if both `file` and `text` are specified then the file is substituted in to replace $FILE_CONTENT in the text.

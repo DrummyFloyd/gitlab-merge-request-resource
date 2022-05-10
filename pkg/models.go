@@ -88,7 +88,8 @@ func (source *Source) GetPipelineName() string {
 	if source.PipelineName != "" {
 		return source.PipelineName
 	} else {
-		return os.Getenv("BUILD_PIPELINE_NAME")
+		jobName := os.Getenv("BUILD_PIPELINE_NAME") + ":" + os.Getenv("BUILD_JOB_NAME")
+		return jobName
 	}
 
 }

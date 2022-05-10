@@ -1,10 +1,11 @@
 package out
 
 import (
-	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
 	"io/ioutil"
 	"path"
 	"strings"
+
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
 )
 
 type Request struct {
@@ -18,15 +19,23 @@ type Response struct {
 }
 
 type Params struct {
-	Repository string   `json:"repository"`
-	Status     string   `json:"status"`
-	Labels     []string `json:"labels"`
-	Comment    Comment  `json:"comment"`
+	Repository  string   `json:"repository"`
+	Status      string   `json:"status"`
+	Labels      []string `json:"labels"`
+	NameBuilder string   `json:"name_builder"`
+	Comment     Comment  `json:"comment"`
 }
 
 type Comment struct {
 	FilePath string `json:"file"`
 	Text     string `json:"text"`
+}
+
+func (params *Params) GetBuilderName() string {
+	if params.NameBuilder != "" {
+		return params.NameBuilder
+	}
+	return "Concourse"
 }
 
 func (comment Comment) ReadContent(folder string) (string, error) {

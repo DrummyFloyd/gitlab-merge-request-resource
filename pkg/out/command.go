@@ -2,13 +2,15 @@ package out
 
 import (
 	"encoding/json"
-	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
-	"github.com/xanzy/go-gitlab"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/DrummyFloyd/gitlab-merge-request-resource/pkg"
+	"github.com/xanzy/go-gitlab"
 )
 
 type Command struct {
@@ -76,7 +78,7 @@ func (command *Command) createNote(destination string, request Request, mr gitla
 
 	if body != "" {
 		options := gitlab.CreateMergeRequestNoteOptions{Body: &body}
-		_, _, err := command.client.Notes.CreateMergeRequestNote(mr.SourceProjectID, mr.IID, &options)
+		_, _, err := command.client.Notes.CreateMergeRequestNote(mr.TargetProjectID, mr.IID, &options)
 		if err != nil {
 			return err
 		}
@@ -105,7 +107,37 @@ func (command *Command) updateLabels(request Request, mr gitlab.MergeRequest) er
 	}
 	return nil
 }
+func (command *Command) updateStatusWithNote(request Request, mr gitlab.MergeRequest) error {
 
+	body := fmt.Sprintf(`Hi, i'm **%s** builder due to this [limitations](https://gitlab.com/gitlab-org/gitlab/-/issues/23648), i can't update pipeline status.<br>
+			*Build Name:* %s<br>
+			*Build State*: **%s**<br>
+			*Build URL*: [here](%s)`, request.Params.GetBuilderName(), os.Getenv("BUILD_JOB_NAME"), request.Params.Status, request.Source.GetTargetURL())
+	path := ".git/comment.json"
+	var noteRes *gitlab.Note
+	var exist bool
+	var noteID int
+	noteLists, _, err := command.client.Notes.ListMergeRequestNotes(mr.TargetProjectID, mr.IID, nil)
+	if err != nil {
+		fmt.Println("ListMergeRequestNotes error:", err)
+	} else {
+		for _, note := range noteLists {
+			if strings.Contains(note.Body, request.Source.GetTargetURL()) {
+				exist = true
+				noteID = note.ID
+				break
+			}
+		}
+	}
+	if exist {
+		noteRes, _, err = command.client.Notes.UpdateMergeRequestNote(mr.TargetProjectID, mr.IID, noteID, &gitlab.UpdateMergeRequestNoteOptions{Body: &body})
+	} else {
+		noteRes, _, err = command.client.Notes.CreateMergeRequestNote(mr.TargetProjectID, mr.IID, &gitlab.CreateMergeRequestNoteOptions{Body: &body})
+	}
+	file, _ := json.MarshalIndent(&noteRes, "", " ")
+	_ = ioutil.WriteFile(path, file, 0644)
+	return err
+}
 func (command *Command) updateCommitStatus(request Request, mr gitlab.MergeRequest) error {
 	if request.Params.Status != "" {
 		state := gitlab.BuildState(gitlab.BuildStateValue(request.Params.Status))
@@ -119,6 +151,7 @@ func (command *Command) updateCommitStatus(request Request, mr gitlab.MergeReque
 
 		_, _, err := command.client.Commits.SetCommitStatus(mr.SourceProjectID, mr.SHA, &options)
 		if err != nil {
+			err := command.updateStatusWithNote(request, mr)
 			return err
 		}
 	}
