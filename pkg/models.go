@@ -8,24 +8,28 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/xanzy/go-gitlab"
 )
 
 type Source struct {
-	URI                string   `json:"uri"`
-	PrivateToken       string   `json:"private_token"`
-	Insecure           bool     `json:"insecure"`
-	SkipWorkInProgress bool     `json:"skip_work_in_progress,omitempty"`
-	SkipDrafts         bool     `json:"skip_drafts,omitempty"`
-	SkipNotMergeable   bool     `json:"skip_not_mergeable,omitempty"`
-	SkipTriggerComment bool     `json:"skip_trigger_comment,omitempty"`
-	ConcourseUrl       string   `json:"concourse_url,omitempty"`
-	PipelineName       string   `json:"pipeline_name,omitempty"`
-	Labels             []string `json:"labels,omitempty"`
-	TargetBranch       string   `json:"target_branch,omitempty"`
-	SourceBranch       string   `json:"source_branch,omitempty"`
-	Sort               string   `json:"sort,omitempty"`
-	Paths              []string `json:"paths,omitempty"`
-	IgnorePaths        []string `json:"ignore_paths,omitempty"`
+	URI                string                  `json:"uri"`
+	MrIID              int                     `json:"mr_iid"`
+	PrivateToken       string                  `json:"private_token"`
+	Insecure           bool                    `json:"insecure"`
+	SkipWorkInProgress bool                    `json:"skip_work_in_progress,omitempty"`
+	SkipDrafts         bool                    `json:"skip_drafts,omitempty"`
+	SkipNotMergeable   bool                    `json:"skip_not_mergeable,omitempty"`
+	SkipTriggerComment bool                    `json:"skip_trigger_comment,omitempty"`
+	ConcourseUrl       string                  `json:"concourse_url,omitempty"`
+	PipelineName       string                  `json:"pipeline_name,omitempty"`
+	Labels             []string                `json:"labels,omitempty"`
+	TargetBranch       string                  `json:"target_branch,omitempty"`
+	SourceBranch       string                  `json:"source_branch,omitempty"`
+	Sort               string                  `json:"sort,omitempty"`
+	Paths              []string                `json:"paths,omitempty"`
+	IgnorePaths        []string                `json:"ignore_paths,omitempty"`
+	States             []gitlab.EventTypeValue `json:"states,omitempty"`
 }
 
 type Version struct {

@@ -89,16 +89,16 @@ func (command *Command) Run(request Request) (Response, error) {
 			continue
 		}
 
-		target := request.Source.GetTargetURL()
-		name := request.Source.GetPipelineName()
+		// target := request.Source.GetTargetURL()
+		// name := request.Source.GetPipelineName()
 
-		options := gitlab.SetCommitStatusOptions{
-			Name:      &name,
-			TargetURL: &target,
-			State:     gitlab.Pending,
-		}
+		// options := gitlab.SetCommitStatusOptions{
+		// 	Name:      &name,
+		// 	TargetURL: &target,
+		// 	State:     gitlab.Pending,
+		// }
 
-		_, _, _ = command.client.Commits.SetCommitStatus(mr.SourceProjectID, mr.SHA, &options)
+		// _, _, _ = command.client.Commits.SetCommitStatus(mr.SourceProjectID, mr.SHA, &options)
 
 		versions = append(versions, pkg.Version{ID: mr.IID, UpdatedAt: updatedAt})
 
